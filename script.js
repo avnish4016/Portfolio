@@ -1,51 +1,40 @@
-// Mobile Menu Toggle
+// Mobile menu toggle
 const hamburger = document.querySelector('.hamburger');
 const navLinks = document.querySelector('.nav-links');
 
-if (hamburger) {
+if (hamburger && navLinks) {
     hamburger.addEventListener('click', () => {
-        navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
+        hamburger.setAttribute('aria-expanded', String(!isOpen));
+        hamburger.setAttribute('aria-label', isOpen ? 'Open navigation menu' : 'Close navigation menu');
+        navLinks.classList.toggle('is-open', !isOpen);
+    });
+
+    const closeMenu = () => {
+        navLinks.classList.remove('is-open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        hamburger.setAttribute('aria-label', 'Open navigation menu');
+    };
+
+    navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeMenu();
     });
 }
 
-// Close mobile menu when link is clicked
-document.querySelectorAll('.nav-links a').forEach(link => {
-    link.addEventListener('click', () => {
-        if (navLinks.style.display === 'flex') {
-            navLinks.style.display = 'none';
-        }
-    });
-});
-
-// Contact Form Submission
+// Prepare a message in the visitor's email app; the site has no form backend.
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
-    contactForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Get form data
+    contactForm.addEventListener('submit', event => {
+        event.preventDefault();
         const formData = new FormData(contactForm);
-        const name = formData.get('name') || document.querySelector('.contact-form input[type="text"]').value;
-        const email = formData.get('email') || document.querySelector('.contact-form input[type="email"]').value;
-        const subject = formData.get('subject') || document.querySelectorAll('.contact-form input')[2].value;
-        const message = formData.get('message') || document.querySelector('.contact-form textarea').value;
-        
-        // Simple validation
-        if (!name || !email || !subject || !message) {
-            alert('Please fill in all fields');
-            return;
-        }
-        
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address');
-            return;
-        }
-        
-        // Show success message
-        alert('Thank you for your message! I will get back to you soon.');
-        contactForm.reset();
+        const name = formData.get('name').trim();
+        const email = formData.get('email').trim();
+        const subject = formData.get('subject').trim();
+        const message = formData.get('message').trim();
+        const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
+        const mailto = `mailto:rana.avnish.1234@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailto;
     });
 }
 
@@ -66,6 +55,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // Navbar background change on scroll
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
     if (window.scrollY > 50) {
         navbar.style.background = 'rgba(26, 26, 26, 0.98)';
     } else {
