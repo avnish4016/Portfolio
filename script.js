@@ -124,6 +124,30 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
     const count = workGallery.querySelector('.gallery-count');
     const previous = workGallery.querySelector('.gallery-prev');
     const next = workGallery.querySelector('.gallery-next');
+    const player = workGallery.querySelector('.gallery-player');
+    const videoContainer = workGallery.querySelector('.gallery-video');
+    const stopPlayback = () => {
+        videoContainer.replaceChildren();
+        player.hidden = true;
+    };
+    const playProject = (project, moveFocus = true) => {
+        const id = project.dataset.reelId;
+        if (!id) return;
+        const frame = document.createElement('iframe');
+        frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview';
+        frame.title = project.querySelector('h3').textContent + ' — reel player';
+        frame.allow = 'fullscreen';
+        frame.allowFullscreen = true;
+        videoContainer.replaceChildren(frame);
+        player.querySelector('.gallery-drive-link').href = project.href;
+        player.hidden = false;
+        if (moveFocus) player.querySelector('.gallery-back').focus({ preventScroll: true });
+        player.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+    };
+    player.querySelector('.gallery-back').addEventListener('click', () => {
+        stopPlayback();
+        track.querySelectorAll('.gallery-thumbnail')[activeSlide]?.focus({ preventScroll: true });
+    });
     let activeSlide = 0;
     let returnFocus;
     const projects = Array.from(document.querySelectorAll('.portfolio-item'));
@@ -131,8 +155,11 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
         const slide = document.createElement('article');
         slide.className = 'gallery-slide';
         slide.setAttribute('aria-label', 'Project ' + (index + 1) + ' of ' + projects.length);
-        const art = document.createElement('div');
-        art.className = 'gallery-art';
+        const art = document.createElement('button');
+        art.type = 'button';
+        art.setAttribute('aria-label', 'Play ' + project.querySelector('h3').textContent);
+        art.addEventListener('click', () => { activeSlide = index; updateControls(); playProject(project); });
+        art.className = 'gallery-art gallery-thumbnail';
         art.dataset.number = String(index + 1).padStart(2, '0');
         const source = project.querySelector('img');
         if (source) {
@@ -143,6 +170,11 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
             image.src = source.currentSrc || source.src;
             art.append(image);
         }
+        const playIcon = document.createElement('span');
+        playIcon.className = 'reel-play';
+        playIcon.setAttribute('aria-hidden', 'true');
+        playIcon.textContent = '▶';
+        art.append(playIcon);
         const caption = document.createElement('div');
         caption.className = 'gallery-caption';
         const title = document.createElement('h3');
@@ -160,6 +192,7 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
         next.disabled = activeSlide >= slides.length - 1;
     };
     const goTo = index => {
+        stopPlayback();
         activeSlide = Math.max(0, Math.min(index, slides.length - 1));
         const slide = slides[activeSlide];
         if (!slide) return;
@@ -172,11 +205,24 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
     workTrigger.addEventListener('click', event => {
         event.preventDefault();
         returnFocus = document.activeElement;
+        stopPlayback();
         workGallery.showModal();
         document.body.classList.add('gallery-open');
         activeSlide = 0;
         track.scrollTo({ left: 0, behavior: 'instant' });
         updateControls();
+    });
+    projects.forEach((project, index) => {
+        project.addEventListener('click', event => {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            returnFocus = project;
+            workGallery.showModal();
+            document.body.classList.add('gallery-open');
+            activeSlide = index;
+            updateControls();
+            playProject(project);
+        });
     });
     workGallery.querySelector('.gallery-close').addEventListener('click', () => workGallery.close());
     workGallery.addEventListener('click', event => {
@@ -186,6 +232,7 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
             event.clientY < bounds.top || event.clientY > bounds.bottom) workGallery.close();
     });
     workGallery.addEventListener('close', () => {
+        stopPlayback();
         document.body.classList.remove('gallery-open');
         returnFocus?.focus({ preventScroll: true });
     });
