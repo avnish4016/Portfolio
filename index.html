@@ -35,7 +35,7 @@
         <div class="hero-content">
             <h1>The Art of Motion, Perfected</h1>
             <p>Every project is treated as a creative masterpiece, not just another video</p>
-            <a href="#portfolio" class="cta-button">View My Work</a>
+            <a href="#portfolio" class="cta-button" data-work-gallery aria-haspopup="dialog" aria-controls="work-gallery">View My Work</a>
         </div>
     </section>
 
@@ -257,6 +257,22 @@
         </div>
     </footer>
 
+    <dialog id="work-gallery" class="work-gallery" aria-labelledby="work-gallery-title">
+        <div class="gallery-shell">
+            <header class="gallery-header">
+                <div><p class="gallery-eyebrow">VISUAL CHRONICLES</p><h2 id="work-gallery-title">Selected Work</h2></div>
+                <button class="gallery-close gallery-control" type="button" aria-label="Close work gallery" autofocus>&times;</button>
+            </header>
+            <div class="gallery-track" tabindex="0" aria-label="Work thumbnails. Swipe or use the arrow buttons."></div>
+            <footer class="gallery-footer">
+                <p class="gallery-count" aria-live="polite" aria-atomic="true"></p>
+                <div class="gallery-arrows">
+                    <button class="gallery-prev gallery-control" type="button" aria-label="Previous project">&#8592;</button>
+                    <button class="gallery-next gallery-control" type="button" aria-label="Next project">&#8594;</button>
+                </div>
+            </footer>
+        </div>
+    </dialog>
     <script src="script.js"></script>
 </body>
 </html>

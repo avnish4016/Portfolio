@@ -41,6 +41,7 @@ if (contactForm) {
 // Smooth scroll for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
+        if (this.hasAttribute('data-work-gallery') && typeof document.getElementById('work-gallery')?.showModal === 'function') return;
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
@@ -113,4 +114,98 @@ if ('IntersectionObserver' in window && typeof Element.prototype.animate === 'fu
     motionPreference.addEventListener('change', event => {
         if (event.matches) runningAnimations.forEach(animation => animation.finish());
     });
+}
+
+// Populate the popup from the portfolio so thumbnails and titles have one source.
+const workGallery = document.getElementById('work-gallery');
+const workTrigger = document.querySelector('[data-work-gallery]');
+if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
+    const track = workGallery.querySelector('.gallery-track');
+    const count = workGallery.querySelector('.gallery-count');
+    const previous = workGallery.querySelector('.gallery-prev');
+    const next = workGallery.querySelector('.gallery-next');
+    let activeSlide = 0;
+    let returnFocus;
+    const projects = Array.from(document.querySelectorAll('.portfolio-item'));
+    projects.forEach((project, index) => {
+        const slide = document.createElement('article');
+        slide.className = 'gallery-slide';
+        slide.setAttribute('aria-label', 'Project ' + (index + 1) + ' of ' + projects.length);
+        const art = document.createElement('div');
+        art.className = 'gallery-art';
+        art.dataset.number = String(index + 1).padStart(2, '0');
+        const source = project.querySelector('img');
+        if (source) {
+            const image = document.createElement('img');
+            image.alt = source.alt;
+            image.loading = 'lazy';
+            image.addEventListener('error', () => { image.hidden = true; });
+            image.src = source.currentSrc || source.src;
+            art.append(image);
+        }
+        const caption = document.createElement('div');
+        caption.className = 'gallery-caption';
+        const title = document.createElement('h3');
+        title.textContent = project.querySelector('h3')?.textContent || 'Untitled project';
+        const category = document.createElement('p');
+        category.textContent = project.querySelector('.overlay p')?.textContent || '';
+        caption.append(title, category);
+        slide.append(art, caption);
+        track.append(slide);
+    });
+    const slides = Array.from(track.children);
+    const updateControls = () => {
+        count.textContent = slides.length ? String(activeSlide + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0') : 'New work coming soon';
+        previous.disabled = activeSlide === 0;
+        next.disabled = activeSlide >= slides.length - 1;
+    };
+    const goTo = index => {
+        activeSlide = Math.max(0, Math.min(index, slides.length - 1));
+        const slide = slides[activeSlide];
+        if (!slide) return;
+        track.scrollTo({
+            left: slide.offsetLeft - slides[0].offsetLeft,
+            behavior: motionPreference.matches ? 'instant' : 'smooth'
+        });
+        updateControls();
+    };
+    workTrigger.addEventListener('click', event => {
+        event.preventDefault();
+        returnFocus = document.activeElement;
+        workGallery.showModal();
+        document.body.classList.add('gallery-open');
+        activeSlide = 0;
+        track.scrollTo({ left: 0, behavior: 'instant' });
+        updateControls();
+    });
+    workGallery.querySelector('.gallery-close').addEventListener('click', () => workGallery.close());
+    workGallery.addEventListener('click', event => {
+        if (event.target !== workGallery) return;
+        const bounds = workGallery.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) workGallery.close();
+    });
+    workGallery.addEventListener('close', () => {
+        document.body.classList.remove('gallery-open');
+        returnFocus?.focus({ preventScroll: true });
+    });
+    previous.addEventListener('click', () => goTo(activeSlide - 1));
+    next.addEventListener('click', () => goTo(activeSlide + 1));
+    workGallery.addEventListener('keydown', event => {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            goTo(activeSlide + (event.key === 'ArrowRight' ? 1 : -1));
+        }
+    });
+    track.addEventListener('scroll', () => {
+        let closest = 0;
+        let distance = Infinity;
+        slides.forEach((slide, index) => {
+            const delta = Math.abs(slide.offsetLeft - slides[0].offsetLeft - track.scrollLeft);
+            if (delta < distance) { closest = index; distance = delta; }
+        });
+        activeSlide = closest;
+        updateControls();
+    }, { passive: true });
+    updateControls();
 }
