@@ -644,3 +644,73 @@ body {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Cinematic motion: staggered entrances and restrained interaction feedback. */
+section[id] {
+    scroll-margin-top: 110px;
+}
+
+.hero-content {
+    animation: none;
+    padding: 24px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-content > * {
+        animation: fadeInUp 850ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    .hero-content > p { animation-delay: 140ms; }
+    .hero-content > .cta-button { animation-delay: 280ms; }
+
+    .hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at 65% 40%, rgba(255, 107, 107, 0.13), transparent 65%);
+        animation: lightArrival 3s ease-out both;
+    }
+
+    .skill-progress { transform-origin: left center; }
+
+    .hamburger[aria-expanded="true"] span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+    }
+    .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .hamburger[aria-expanded="true"] span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+    }
+
+    .portfolio-image img {
+        transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .social-links a {
+        display: inline-block;
+        transition: color 250ms ease, transform 250ms ease;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        .portfolio-item:hover { transform: translateY(-6px); }
+        .portfolio-item:hover img { transform: scale(1.06); }
+        .social-links a:hover { transform: translateY(-4px); }
+    }
+}
+
+@keyframes lightArrival {
+    from { opacity: 0; transform: scale(1.12); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .nav-links.is-open {
+        animation: fadeInUp 220ms ease-out backwards;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-content, .hero-content > * {
+        animation: none;
+    }
+}
