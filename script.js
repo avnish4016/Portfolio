@@ -311,3 +311,33 @@ if (serviceDialog && typeof serviceDialog.showModal === 'function') {
         serviceReturnFocus?.focus({ preventScroll: true });
     });
 }
+
+// Service assignments live on each portfolio card so future work is easy to classify.
+const workFilters = document.querySelector('.work-filters');
+if (workFilters) {
+    const cards = Array.from(document.querySelectorAll('.portfolio-grid .portfolio-item'));
+    const status = document.querySelector('.work-filter-status');
+    const empty = document.querySelector('.work-empty');
+    const filterWork = key => {
+        let visible = 0;
+        cards.forEach(card => {
+            const matches = key === 'all' || (card.dataset.services || '').split(' ').includes(key);
+            card.hidden = !matches;
+            if (matches) visible++;
+        });
+        const buttons = Array.from(workFilters.querySelectorAll('[data-work-filter]'));
+        buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.workFilter === key)));
+        const label = buttons.find(button => button.dataset.workFilter === key)?.textContent || 'All Work';
+        status.textContent = label + ' · ' + visible + (visible === 1 ? ' project' : ' projects');
+        empty.hidden = visible > 0;
+    };
+    workFilters.addEventListener('click', event => {
+        const button = event.target.closest('[data-work-filter]');
+        if (button) filterWork(button.dataset.workFilter);
+    });
+    document.querySelector('[data-reset-work]').addEventListener('click', () => {
+        filterWork('all');
+        workFilters.querySelector('[data-work-filter="all"]').focus({ preventScroll: true });
+    });
+    filterWork('all');
+}
