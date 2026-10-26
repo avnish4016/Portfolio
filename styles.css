@@ -864,3 +864,14 @@ details.service-card { padding: 0; text-align: left; }
     .services-grid { grid-template-columns: 1fr; }
     .service-enquire { width: 100%; padding: 12px 18px; }
 }
+
+/* Service-based portfolio browsing. */
+.work-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 18px; }
+.work-filters button, .work-empty button { font: inherit; color: var(--text-light); background: #202020; border: 1px solid #555; padding: 10px 16px; border-radius: 24px; cursor: pointer; }
+.work-filters button[aria-pressed="true"] { background: var(--accent-color); color: #171717; border-color: var(--accent-color); font-weight: 700; }
+.work-filters button:focus-visible, .work-empty button:focus-visible { outline: 3px solid var(--accent-color); outline-offset: 3px; }
+.work-filter-status { text-align: center; color: var(--text-muted); margin-bottom: 24px; font-size: .9rem; }
+.portfolio-item[hidden], .work-empty[hidden] { display: none !important; }
+.work-empty { padding: 48px 20px; text-align: center; border: 1px solid #555; border-radius: 12px; }
+.work-empty p { margin: 12px 0 20px; color: var(--text-muted); }
+.reel-card .overlay p { font-size: .75rem; }
