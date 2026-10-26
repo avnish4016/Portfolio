@@ -256,3 +256,58 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
     }, { passive: true });
     updateControls();
 }
+
+// Service content remains available as native details without modal support.
+const serviceDialog = document.getElementById('service-dialog');
+if (serviceDialog && typeof serviceDialog.showModal === 'function') {
+    const serviceContent = serviceDialog.querySelector('.service-dialog-content');
+    let serviceReturnFocus;
+    document.querySelectorAll('details.service-card').forEach(card => {
+        const summary = card.querySelector('summary');
+        summary.addEventListener('click', event => {
+            event.preventDefault();
+            serviceReturnFocus = summary;
+            serviceDialog.querySelector('#service-dialog-title').textContent = card.querySelector('.service-title').textContent;
+            serviceContent.replaceChildren(card.querySelector('.service-detail').cloneNode(true));
+            const workLink = serviceContent.querySelector('[data-service-reel]');
+            workLink.addEventListener('click', event => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                const frame = document.createElement('iframe');
+                frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(workLink.dataset.serviceReel) + '/preview';
+                frame.title = workLink.getAttribute('aria-label');
+                frame.allow = 'fullscreen';
+                frame.allowFullscreen = true;
+                serviceContent.querySelector('.service-video').replaceChildren(frame);
+                frame.tabIndex = 0;
+                frame.focus({ preventScroll: true });
+                frame.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+            });
+            serviceContent.querySelector('.service-enquire').addEventListener('click', event => {
+                event.preventDefault();
+                serviceReturnFocus = null;
+                serviceDialog.close();
+                const subject = document.getElementById('contact-subject');
+                if (subject) subject.value = card.querySelector('.service-title').textContent + ' enquiry';
+                const contact = document.getElementById('contact');
+                contact.scrollIntoView({ behavior: motionPreference.matches ? 'instant' : 'smooth', block: 'start' });
+                document.getElementById('contact-name')?.focus({ preventScroll: true });
+            });
+            serviceDialog.showModal();
+            document.body.classList.add('service-open');
+            serviceDialog.scrollTop = 0;
+        });
+    });
+    serviceDialog.querySelector('.service-close').addEventListener('click', () => serviceDialog.close());
+    serviceDialog.addEventListener('click', event => {
+        if (event.target !== serviceDialog) return;
+        const bounds = serviceDialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) serviceDialog.close();
+    });
+    serviceDialog.addEventListener('close', () => {
+        serviceContent.replaceChildren();
+        document.body.classList.remove('service-open');
+        serviceReturnFocus?.focus({ preventScroll: true });
+    });
+}
