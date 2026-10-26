@@ -28,24 +28,15 @@ if (hamburger && navLinks) {
     });
 }
 
-// Prepare a message in the visitor's email app; the site has no form backend.
+// Validate, then let the browser submit to the enquiry email service.
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
     contactForm.addEventListener('input', event => event.target.setCustomValidity?.(''));
     contactForm.addEventListener('submit', event => {
-        event.preventDefault();
         for (const field of contactForm.querySelectorAll('[required]')) {
             field.setCustomValidity(field.value.trim() ? '' : 'Please fill in this field.');
         }
-        if (!contactForm.reportValidity()) return;
-        const formData = new FormData(contactForm);
-        const name = formData.get('name').trim();
-        const email = formData.get('email').trim();
-        const subject = formData.get('subject').trim();
-        const message = formData.get('message').trim();
-        const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
-        const mailto = `mailto:rana.avnish.1234@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailto;
+        if (!contactForm.reportValidity()) event.preventDefault();
     });
 }
 
