@@ -16,17 +16,28 @@ if (hamburger && navLinks) {
         hamburger.setAttribute('aria-label', 'Open navigation menu');
     };
 
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.navbar')) closeMenu();
+    });
+    window.matchMedia('(min-width: 1101px)').addEventListener('change', closeMenu);
     navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') closeMenu();
+        if (event.key === 'Escape' && navLinks.classList.contains('is-open')) {
+            closeMenu(); hamburger.focus();
+        }
     });
 }
 
 // Prepare a message in the visitor's email app; the site has no form backend.
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
+    contactForm.addEventListener('input', event => event.target.setCustomValidity?.(''));
     contactForm.addEventListener('submit', event => {
         event.preventDefault();
+        for (const field of contactForm.querySelectorAll('[required]')) {
+            field.setCustomValidity(field.value.trim() ? '' : 'Please fill in this field.');
+        }
+        if (!contactForm.reportValidity()) return;
         const formData = new FormData(contactForm);
         const name = formData.get('name').trim();
         const email = formData.get('email').trim();
@@ -146,6 +157,7 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
     };
     player.querySelector('.gallery-back').addEventListener('click', () => {
         stopPlayback();
+        goTo(activeSlide);
         track.querySelectorAll('.gallery-thumbnail')[activeSlide]?.focus({ preventScroll: true });
     });
     let activeSlide = 0;
@@ -251,6 +263,7 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
             const delta = Math.abs(slide.offsetLeft - slides[0].offsetLeft - track.scrollLeft);
             if (delta < distance) { closest = index; distance = delta; }
         });
+        if (!player.hidden) return;
         activeSlide = closest;
         updateControls();
     }, { passive: true });
@@ -340,4 +353,12 @@ if (workFilters) {
         workFilters.querySelector('[data-work-filter="all"]').focus({ preventScroll: true });
     });
     filterWork('all');
+}
+
+// Keep anchor offsets and the hero aligned with the actual navigation height.
+const measuredNavbar = document.querySelector('.navbar');
+if (measuredNavbar && 'ResizeObserver' in window) {
+    new ResizeObserver(() => {
+        document.documentElement.style.setProperty('--nav-height', measuredNavbar.offsetHeight + 'px');
+    }).observe(measuredNavbar);
 }
