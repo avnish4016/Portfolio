@@ -395,7 +395,7 @@ if (cinematicHero) {
         cinematicHero.style.setProperty('--lens-y', '0px');
     };
     cinematicHero.addEventListener('pointermove', event => {
-        if (motionPreference.matches || event.pointerType !== 'mouse') return;
+        if (motionPreference.matches || cinematicHero.classList.contains('motion-paused') || event.pointerType !== 'mouse') return;
         cancelAnimationFrame(pointerFrame);
         pointerFrame = requestAnimationFrame(() => {
             const bounds = cinematicHero.getBoundingClientRect();
@@ -405,7 +405,7 @@ if (cinematicHero) {
     }, { passive: true });
     cinematicHero.addEventListener('pointerleave', resetLens);
     cinematicHero.addEventListener('pointerdown', event => {
-        if (motionPreference.matches || event.target.closest('a, button')) return;
+        if (motionPreference.matches || cinematicHero.classList.contains('motion-paused') || event.target.closest('a, button')) return;
         const bounds = cinematicHero.getBoundingClientRect();
         const ripple = document.createElement('span');
         ripple.className = 'hero-ripple';
@@ -424,4 +424,25 @@ if (cinematicHero) {
         cinematicHero.classList.remove('is-entering');
         cinematicHero.querySelectorAll('.hero-ripple').forEach(ripple => ripple.remove());
     });
+}
+
+// Pause ambient movement on request, offscreen, or in a background tab.
+const motionToggle = document.querySelector('.motion-toggle');
+if (cinematicHero && motionToggle) {
+    motionToggle.hidden = motionPreference.matches;
+    motionToggle.addEventListener('click', () => {
+        const paused = cinematicHero.classList.toggle('motion-paused');
+        motionToggle.setAttribute('aria-pressed', String(paused));
+        motionToggle.textContent = paused ? 'Resume motion' : 'Pause motion';
+    });
+    motionPreference.addEventListener('change', event => { motionToggle.hidden = event.matches; });
+    let heroVisible = true;
+    const updateAmbient = () => cinematicHero.classList.toggle('motion-offscreen', !heroVisible || document.hidden);
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(entries => {
+            heroVisible = entries[0].isIntersecting;
+            updateAmbient();
+        }).observe(cinematicHero);
+    }
+    document.addEventListener('visibilitychange', updateAmbient);
 }
