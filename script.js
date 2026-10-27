@@ -157,6 +157,7 @@ if (workGallery && workTrigger && typeof workGallery.showModal === 'function') {
     projects.forEach((project, index) => {
         const slide = document.createElement('article');
         slide.className = 'gallery-slide';
+        slide.style.setProperty('--slide-delay', Math.min(index, 3) * 85 + 'ms');
         slide.setAttribute('aria-label', 'Project ' + (index + 1) + ' of ' + projects.length);
         const art = document.createElement('button');
         art.type = 'button';
@@ -352,4 +353,75 @@ if (measuredNavbar && 'ResizeObserver' in window) {
     new ResizeObserver(() => {
         document.documentElement.style.setProperty('--nav-height', measuredNavbar.offsetHeight + 'px');
     }).observe(measuredNavbar);
+}
+
+
+// A brief welcome, once per tab session. The page remains immediately usable.
+const cinematicHero = document.querySelector('.hero');
+if (cinematicHero) {
+    let intro;
+    let introTimer;
+    let pointerFrame = 0;
+    const dismissIntro = () => {
+        intro?.remove();
+        clearTimeout(introTimer);
+        cinematicHero.style.setProperty('--welcome-delay', '0ms');
+        document.removeEventListener('pointerdown', dismissIntro);
+        document.removeEventListener('keydown', dismissIntro);
+        window.removeEventListener('scroll', dismissIntro);
+    };
+    let welcomed = false;
+    try { welcomed = sessionStorage.getItem('avnish-welcomed') === '1'; } catch { /* Storage may be blocked. */ }
+    if (!motionPreference.matches && !welcomed && !location.hash && window.scrollY < 10) {
+        intro = document.createElement('div');
+        intro.className = 'welcome-intro';
+        intro.setAttribute('aria-hidden', 'true');
+        intro.innerHTML = '<span>AVNISH FILMS</span><strong>Welcome to my frame.</strong>';
+        document.body.append(intro);
+        cinematicHero.style.setProperty('--welcome-delay', '1150ms');
+        try { sessionStorage.setItem('avnish-welcomed', '1'); } catch { /* Animation does not depend on storage. */ }
+        introTimer = setTimeout(dismissIntro, 1750);
+        document.addEventListener('pointerdown', dismissIntro, { once: true });
+        document.addEventListener('keydown', dismissIntro, { once: true });
+        window.addEventListener('scroll', dismissIntro, { once: true, passive: true });
+    }
+    cinematicHero.classList.add('is-entering');
+    // Stop entrance animation immediately when a visitor starts using the page.
+    cinematicHero.addEventListener('focusin', () => cinematicHero.classList.remove('is-entering'));
+    setTimeout(() => cinematicHero.classList.remove('is-entering'), 3000);
+    const resetLens = () => {
+        cancelAnimationFrame(pointerFrame);
+        cinematicHero.style.setProperty('--lens-x', '0px');
+        cinematicHero.style.setProperty('--lens-y', '0px');
+    };
+    cinematicHero.addEventListener('pointermove', event => {
+        if (motionPreference.matches || event.pointerType !== 'mouse') return;
+        cancelAnimationFrame(pointerFrame);
+        pointerFrame = requestAnimationFrame(() => {
+            const bounds = cinematicHero.getBoundingClientRect();
+            cinematicHero.style.setProperty('--lens-x', ((event.clientX - bounds.left) / bounds.width - .5) * 42 + 'px');
+            cinematicHero.style.setProperty('--lens-y', ((event.clientY - bounds.top) / bounds.height - .5) * 32 + 'px');
+        });
+    }, { passive: true });
+    cinematicHero.addEventListener('pointerleave', resetLens);
+    cinematicHero.addEventListener('pointerdown', event => {
+        if (motionPreference.matches || event.target.closest('a, button')) return;
+        const bounds = cinematicHero.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'hero-ripple';
+        ripple.setAttribute('aria-hidden', 'true');
+        ripple.style.left = event.clientX - bounds.left + 'px';
+        ripple.style.top = event.clientY - bounds.top + 'px';
+        // Bound decorative work even during rapid tapping.
+        if (cinematicHero.querySelectorAll('.hero-ripple').length >= 4) cinematicHero.querySelector('.hero-ripple').remove();
+        cinematicHero.append(ripple);
+        setTimeout(() => ripple.remove(), 900);
+    }, { passive: true });
+    motionPreference.addEventListener('change', event => {
+        if (!event.matches) return;
+        dismissIntro();
+        resetLens();
+        cinematicHero.classList.remove('is-entering');
+        cinematicHero.querySelectorAll('.hero-ripple').forEach(ripple => ripple.remove());
+    });
 }
